@@ -7,35 +7,35 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.45);
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    color: #ffffff;
+    background: rgba(242, 224, 228, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    color: #BEAEB2;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: grab;
     text-shadow: none;
-    backdrop-filter: blur(14px) saturate(160%);
-    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    backdrop-filter: blur(18px) saturate(170%);
+    -webkit-backdrop-filter: blur(18px) saturate(170%);
     transition: background 0.2s;
 }
 #st-music-player-button:active { cursor: grabbing; }
 #st-music-player-button svg { width: 20px; height: 20px; }
-#st-music-player-button:hover { background: rgba(255, 255, 255, 0.28); }
-#st-music-player-button.is-playing { background: rgba(255, 255, 255, 0.3); }
+#st-music-player-button:hover { background: rgba(242, 224, 228, 0.8); }
+#st-music-player-button.is-playing { background: rgba(242, 224, 228, 0.85); }
 
-/* ========== 播放器面板：高透白，无模糊 ========== */
+/* ========== 播放器面板：F2E0E4 毛玻璃 ========== */
 .st-mp {
     position: fixed;
     z-index: 25000;
     width: 300px;
     max-width: calc(100vw - 16px);
-    background: rgba(255, 255, 255, 0.45);
-    border: 1px solid rgba(255, 255, 255, 0.4);
+    background: rgba(242, 224, 228, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.55);
     border-radius: 26px;
-    backdrop-filter: blur(18px) saturate(160%);
-    -webkit-backdrop-filter: blur(18px) saturate(160%);
-    color: #ffffff;
+    backdrop-filter: blur(26px) saturate(170%);
+    -webkit-backdrop-filter: blur(26px) saturate(170%);
+    color: #BEAEB2;
     font-size: 13px;
     overflow: hidden;
     user-select: none;
@@ -54,15 +54,15 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    color: rgba(255, 255, 255, 0.85);
+    color: rgba(190, 174, 178, 0.8);
     transition: color 0.15s;
 }
-.st-mp__close:hover { color: #ffffff; }
+.st-mp__close:hover { color: #BEAEB2; }
 .st-mp__close svg { width: 15px; height: 15px; }
 
 .st-mp__body { padding: 18px 18px 16px; }
 
-/* ========== 头像区 + 弯曲虚线连接 ========== */
+/* ========== 头像区 + 心电波动效 ========== */
 .st-mp__stage {
     display: flex;
     align-items: center;
@@ -77,7 +77,7 @@
     flex: 0 0 64px;
     border-radius: 50%;
     cursor: pointer;
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.4);
     border: 3px solid #ffffff;
     transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), flex-basis 0.5s cubic-bezier(0.4, 0, 0.2, 1),
         margin 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease, transform 0.5s ease;
@@ -116,7 +116,7 @@
     margin: 0;
     opacity: 0;
     overflow: hidden;
-    color: #ffffff;
+    color: #BEAEB2;
     transition: width 0.45s cubic-bezier(0.4, 0, 0.2, 1), margin 0.45s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
 }
 .st-mp__link svg { width: 100%; height: 26px; display: block; }
@@ -132,13 +132,13 @@
     to { stroke-dashoffset: 0; }
 }
 
-/* ========== 文案（纯白，无光晕） ========== */
+/* ========== 文案 ========== */
 .st-mp__track {
     text-align: center;
     font-size: 15px;
     font-weight: 600;
     letter-spacing: 0.2px;
-    color: #ffffff;
+    color: #BEAEB2;
     margin: 2px 6px 0;
     white-space: nowrap;
     overflow: hidden;
@@ -148,7 +148,7 @@
 .st-mp__status {
     text-align: center;
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.75);
+    color: rgba(190, 174, 178, 0.8);
     margin-top: 5px;
     letter-spacing: 0.3px;
     text-shadow: none;
@@ -159,7 +159,7 @@
 .st-mp__bar {
     position: relative;
     height: 3px;
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(190, 174, 178, 0.22);
     border-radius: 2px;
     cursor: pointer;
 }
@@ -169,7 +169,7 @@
     top: 0;
     height: 100%;
     width: 0;
-    background: #ffffff;
+    background: #BEAEB2;
     border-radius: 2px;
 }
 .st-mp__bar-thumb {
@@ -180,22 +180,22 @@
     height: 11px;
     margin-left: -5.5px;
     transform: translateY(-50%);
-    background: #ffffff;
+    background: #BEAEB2;
     border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, 0.6);
+    border: 2px solid #ffffff;
     pointer-events: none;
 }
 .st-mp__times {
     display: flex;
     justify-content: space-between;
     font-size: 10.5px;
-    color: rgba(255, 255, 255, 0.75);
+    color: rgba(190, 174, 178, 0.8);
     margin-top: 5px;
     font-variant-numeric: tabular-nums;
     text-shadow: none;
 }
 
-/* ========== 控制按钮（线条 SVG，统一大小，纯白） ========== */
+/* ========== 控制按钮（线条 SVG，统一大小） ========== */
 .st-mp__controls {
     display: flex;
     align-items: center;
@@ -208,7 +208,7 @@
     height: 40px;
     border: none;
     background: transparent;
-    color: #ffffff;
+    color: #BEAEB2;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -217,13 +217,13 @@
     transition: color 0.15s;
 }
 .st-mp__btn svg { width: 22px; height: 22px; }
-.st-mp__btn:hover { color: #ffffff; }
+.st-mp__btn:hover { color: #8a7a7f; }
 .st-mp__btn:active { transform: scale(0.92); }
-.st-mp__btn--primary { color: #ffffff; }
+.st-mp__btn--primary { color: #BEAEB2; }
 
-.st-mp__like.is-liked { color: #ffffff; }
+.st-mp__like.is-liked { color: #8a7a7f; }
 .st-mp__like.is-liked svg path { fill: currentColor; }
-.st-mp__shuffle.is-active, .st-mp__repeat.is-active { color: #ffffff; }
+.st-mp__shuffle.is-active, .st-mp__repeat.is-active { color: #8a7a7f; }
 .st-mp__repeat.is-one { position: relative; }
 .st-mp__repeat.is-one::after {
     content: '1';
@@ -233,7 +233,7 @@
     font-size: 9px;
     font-weight: 700;
     line-height: 1;
-    color: #ffffff;
+    color: #BEAEB2;
 }
 
 /* ========== 底部上滑列表 ========== */
@@ -241,9 +241,9 @@
     position: absolute;
     inset: 0;
     z-index: 2;
-    background: rgba(255, 255, 255, 0.6);
-    backdrop-filter: blur(22px) saturate(170%);
-    -webkit-backdrop-filter: blur(22px) saturate(170%);
+    background: rgba(242, 224, 228, 0.72);
+    backdrop-filter: blur(30px) saturate(180%);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
     border-radius: 26px;
     display: flex;
     flex-direction: column;
@@ -262,24 +262,24 @@
 .st-mp__add {
     width: 34px;
     height: 34px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.5);
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.16);
-    color: #ffffff;
+    background: rgba(255, 255, 255, 0.4);
+    color: #BEAEB2;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: background 0.15s;
 }
-.st-mp__add:hover { background: rgba(255, 255, 255, 0.28); }
+.st-mp__add:hover { background: rgba(255, 255, 255, 0.6); }
 .st-mp__add:active { transform: scale(0.92); }
 .st-mp__add svg { width: 17px; height: 17px; }
 
 .st-mp__sheet-title {
     font-size: 14px;
     font-weight: 600;
-    color: #ffffff;
+    color: #BEAEB2;
     text-shadow: none;
 }
 .st-mp__sheet-tools { display: flex; align-items: center; gap: 4px; }
@@ -288,7 +288,7 @@
     height: 28px;
     border: none;
     background: transparent;
-    color: rgba(255, 255, 255, 0.85);
+    color: rgba(190, 174, 178, 0.8);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -296,7 +296,7 @@
     border-radius: 6px;
     transition: color 0.15s;
 }
-.st-mp__sheet-tools button:hover { color: #ffffff; }
+.st-mp__sheet-tools button:hover { color: #8a7a7f; }
 .st-mp__sheet-tools svg { width: 16px; height: 16px; }
 
 /* 添加面板 */
@@ -309,9 +309,9 @@
 .st-mp__add-panel > button {
     flex: 1;
     min-width: 120px;
-    border: 1px dashed rgba(255, 255, 255, 0.35);
-    background: rgba(255, 255, 255, 0.08);
-    color: #ffffff;
+    border: 1px dashed rgba(190, 174, 178, 0.5);
+    background: rgba(255, 255, 255, 0.25);
+    color: #BEAEB2;
     border-radius: 10px;
     padding: 10px;
     font-size: 12.5px;
@@ -322,26 +322,26 @@
     gap: 6px;
     transition: background 0.15s;
 }
-.st-mp__add-panel > button:hover { background: rgba(255, 255, 255, 0.16); }
+.st-mp__add-panel > button:hover { background: rgba(255, 255, 255, 0.45); }
 .st-mp__add-panel > button svg { width: 15px; height: 15px; }
 .st-mp__url-row { display: flex; gap: 6px; width: 100%; }
 .st-mp__url-input {
     flex: 1;
     min-width: 0;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.25);
+    border: 1px solid rgba(190, 174, 178, 0.35);
     border-radius: 8px;
-    color: #ffffff;
+    color: #BEAEB2;
     padding: 7px 10px;
     font-size: 12.5px;
     outline: none;
 }
-.st-mp__url-input::placeholder { color: rgba(255, 255, 255, 0.5); }
-.st-mp__url-input:focus { border-color: rgba(255, 255, 255, 0.5); }
+.st-mp__url-input::placeholder { color: rgba(190, 174, 178, 0.6); }
+.st-mp__url-input:focus { border-color: #BEAEB2; }
 .st-mp__url-add {
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    background: rgba(255, 255, 255, 0.16);
-    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.4);
+    color: #BEAEB2;
     border-radius: 8px;
     padding: 0 14px;
     font-size: 12.5px;
@@ -358,7 +358,7 @@
     min-height: 0;
 }
 .st-mp__list::-webkit-scrollbar { width: 5px; }
-.st-mp__list::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.3); border-radius: 3px; }
+.st-mp__list::-webkit-scrollbar-thumb { background: rgba(190, 174, 178, 0.35); border-radius: 3px; }
 .st-mp__item {
     display: flex;
     align-items: center;
@@ -368,9 +368,9 @@
     cursor: pointer;
     transition: background 0.12s;
 }
-.st-mp__item:hover { background: rgba(255, 255, 255, 0.08); }
-.st-mp__item.is-current { background: rgba(255, 255, 255, 0.14); }
-.st-mp__item.is-current .st-mp__item-name { color: #ffffff; font-weight: 600; }
+.st-mp__item:hover { background: rgba(255, 255, 255, 0.22); }
+.st-mp__item.is-current { background: rgba(255, 255, 255, 0.32); }
+.st-mp__item.is-current .st-mp__item-name { color: #8a7a7f; font-weight: 600; }
 .st-mp__item-name {
     flex: 1;
     min-width: 0;
@@ -378,26 +378,26 @@
     overflow: hidden;
     text-overflow: ellipsis;
     font-size: 12.5px;
-    color: #ffffff;
+    color: #BEAEB2;
     text-shadow: none;
 }
-.st-mp__item-like { width: 15px; height: 15px; color: rgba(255, 255, 255, 0.5); flex: 0 0 auto; }
+.st-mp__item-like { width: 15px; height: 15px; color: rgba(190, 174, 178, 0.55); flex: 0 0 auto; }
 .st-mp__item-like svg { width: 15px; height: 15px; }
-.st-mp__item-like.is-liked { color: #ffffff; }
+.st-mp__item-like.is-liked { color: #8a7a7f; }
 .st-mp__item-like.is-liked svg path { fill: currentColor; }
 .st-mp__item-del {
     width: 22px;
     height: 22px;
     border: none;
     background: transparent;
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(190, 174, 178, 0.55);
     border-radius: 5px;
     cursor: pointer;
     transition: color 0.12s, background 0.12s;
 }
-.st-mp__item-del:hover { background: rgba(255, 255, 255, 0.15); color: #ff6b6b; }
+.st-mp__item-del:hover { background: rgba(255, 255, 255, 0.35); color: #c96a7a; }
 .st-mp__item-del svg { width: 13px; height: 13px; }
-.st-mp__empty { padding: 18px; text-align: center; color: rgba(255, 255, 255, 0.6); font-size: 12px; cursor: default; text-shadow: none; }
+.st-mp__empty { padding: 18px; text-align: center; color: rgba(190, 174, 178, 0.65); font-size: 12px; cursor: default; text-shadow: none; }
 
 /* 音量 */
 .st-mp__volume {
@@ -406,9 +406,9 @@
     gap: 8px;
     margin-top: 12px;
     padding-top: 12px;
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    border-top: 1px solid rgba(190, 174, 178, 0.25);
 }
-.st-mp__vol-icon { color: rgba(255, 255, 255, 0.85); display: flex; }
+.st-mp__vol-icon { color: #BEAEB2; display: flex; }
 .st-mp__vol-icon svg { width: 16px; height: 16px; }
 .st-mp__vol {
     flex: 1;
@@ -416,7 +416,7 @@
     appearance: none;
     height: 3px;
     border-radius: 2px;
-    background: rgba(255, 255, 255, 0.25);
+    background: rgba(190, 174, 178, 0.25);
     outline: none;
 }
 .st-mp__vol::-webkit-slider-thumb {
@@ -425,15 +425,15 @@
     width: 13px;
     height: 13px;
     border-radius: 50%;
-    background: #ffffff;
-    border: 1px solid rgba(255, 255, 255, 0.6);
+    background: #BEAEB2;
+    border: 2px solid #ffffff;
     cursor: pointer;
 }
 .st-mp__vol::-moz-range-thumb {
     width: 13px;
     height: 13px;
-    border: 1px solid rgba(255, 255, 255, 0.6);
+    border: 2px solid #ffffff;
     border-radius: 50%;
-    background: #ffffff;
+    background: #BEAEB2;
     cursor: pointer;
 }

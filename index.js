@@ -114,9 +114,9 @@ function compressImage(file, size = 256) {
 // ---------------- 默认头像（内联 SVG） ----------------
 const DEFAULT_AVATAR = "data:image/svg+xml," + encodeURIComponent(
     `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>` +
-    `<rect width='100' height='100' fill='#efedee'/>` +
-    `<circle cx='50' cy='40' r='17' fill='#bcb5b8'/>` +
-    `<path d='M20 82c0-16 13-26 30-26s30 10 30 26' fill='#bcb5b8'/>` +
+    `<rect width='100' height='100' fill='#F2E0E4'/>` +
+    `<circle cx='50' cy='40' r='17' fill='#BEAEB2'/>` +
+    `<path d='M20 82c0-16 13-26 30-26s30 10 30 26' fill='#BEAEB2'/>` +
     `</svg>`
 );
 
