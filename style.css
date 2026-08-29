@@ -8,31 +8,22 @@
     height: 40px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.55);
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    color: #8a7a7f;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    color: #5a5a5a;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
     backdrop-filter: blur(14px) saturate(160%);
     -webkit-backdrop-filter: blur(14px) saturate(160%);
-    transition: background 0.2s, color 0.2s, border-color 0.2s;
+    transition: background 0.2s, color 0.2s;
 }
 #st-music-player-button svg { width: 20px; height: 20px; }
 #st-music-player-button:hover {
     background: rgba(255, 255, 255, 0.85);
-    color: #BE8F98;
+    color: #1a1a1a;
 }
-#st-music-player-button.is-playing {
-    color: #BE8F98;
-    border-color: rgba(190, 174, 178, 0.6);
-    animation: st-mp-pulse 1.8s ease-in-out infinite;
-}
-@keyframes st-mp-pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.14); }
-}
+#st-music-player-button.is-playing { color: #1a1a1a; background: rgba(255, 255, 255, 0.8); }
 
 /* ========== 播放器面板：白色高透毛玻璃 ========== */
 .st-mp {
@@ -43,10 +34,9 @@
     background: rgba(255, 255, 255, 0.58);
     backdrop-filter: blur(28px) saturate(175%);
     -webkit-backdrop-filter: blur(28px) saturate(175%);
-    border: 1px solid rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(0, 0, 0, 0.06);
     border-radius: 26px;
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28), 0 4px 14px rgba(0, 0, 0, 0.08);
-    color: #3b3235;
+    color: #3a3a3a;
     font-size: 13px;
     overflow: hidden;
     user-select: none;
@@ -64,18 +54,15 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    color: #b3a4a9;
-    transition: background 0.15s, color 0.15s;
+    color: #9a9a9a;
+    transition: color 0.15s;
 }
-.st-mp__close:hover { background: rgba(0, 0, 0, 0.06); color: #6b5f63; }
+.st-mp__close:hover { color: #3a3a3a; }
 .st-mp__close svg { width: 15px; height: 15px; }
 
-.st-mp__body {
-    padding: 18px 18px 16px;
-    transition: opacity 0.2s;
-}
+.st-mp__body { padding: 18px 18px 16px; }
 
-/* ========== 头像区 + 连接动效 ========== */
+/* ========== 头像区 + 弯曲虚线连接 ========== */
 .st-mp__stage {
     display: flex;
     align-items: center;
@@ -90,9 +77,8 @@
     flex: 0 0 64px;
     border-radius: 50%;
     cursor: pointer;
-    background: #f3eef0;
-    border: 2px solid #BEAEB2;
-    box-shadow: 0 6px 18px rgba(190, 174, 178, 0.4);
+    background: #f4f2f3;
+    border: 3px solid #ffffff;
     transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), flex-basis 0.5s cubic-bezier(0.4, 0, 0.2, 1),
         margin 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease, transform 0.5s ease;
     overflow: visible;
@@ -104,15 +90,6 @@
     object-fit: cover;
     display: block;
 }
-.st-mp__avatar::after {
-    content: '';
-    position: absolute;
-    inset: -2px;
-    border-radius: 50%;
-    border: 2px solid transparent;
-    transition: border-color 0.3s;
-}
-.st-mp__avatar:hover::after { border-color: rgba(190, 174, 178, 0.8); }
 
 .st-mp__dot {
     position: absolute;
@@ -123,7 +100,6 @@
     border-radius: 50%;
     background: #79c98a;
     border: 2.5px solid #fff;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
 /* 对方头像：初始隐藏，连接后展开 */
@@ -140,35 +116,25 @@
     flex-basis: 64px;
     opacity: 1;
     transform: scale(1);
-    margin-left: 14px;
+    margin-left: 0;
 }
 
-/* 连接波纹 */
+/* 弯曲虚线：连接中流动，连接后静态 */
 .st-mp__link {
     display: flex;
     align-items: center;
-    gap: 4px;
     width: 0;
     margin: 0;
     opacity: 0;
     overflow: hidden;
+    color: #c6c1c3;
     transition: width 0.45s cubic-bezier(0.4, 0, 0.2, 1), margin 0.45s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
 }
-.st-mp.is-connecting .st-mp__link { width: 34px; margin: 0 8px; opacity: 1; }
-.st-mp.is-connected .st-mp__link { width: 0; margin: 0; opacity: 0; }
-.st-mp__link i {
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: #BEAEB2;
-    animation: st-mp-bounce 1s ease-in-out infinite;
-}
-.st-mp__link i:nth-child(2) { animation-delay: 0.15s; }
-.st-mp__link i:nth-child(3) { animation-delay: 0.3s; }
-@keyframes st-mp-bounce {
-    0%, 100% { transform: translateY(0); opacity: 0.35; }
-    50% { transform: translateY(-6px); opacity: 1; }
-}
+.st-mp__link svg { width: 100%; height: 26px; display: block; }
+.st-mp.is-connecting .st-mp__link,
+.st-mp.is-connected .st-mp__link { width: 52px; margin: 0 6px; opacity: 1; }
+.st-mp.is-connecting .st-mp__dash { animation: st-mp-dash 0.7s linear infinite; }
+@keyframes st-mp-dash { to { stroke-dashoffset: -6.5; } }
 
 /* ========== 文案 ========== */
 .st-mp__track {
@@ -176,7 +142,7 @@
     font-size: 15px;
     font-weight: 600;
     letter-spacing: 0.2px;
-    color: #3b3235;
+    color: #3a3a3a;
     margin: 2px 6px 0;
     white-space: nowrap;
     overflow: hidden;
@@ -185,7 +151,7 @@
 .st-mp__status {
     text-align: center;
     font-size: 11px;
-    color: #a4939a;
+    color: #a3a3a3;
     margin-top: 5px;
     letter-spacing: 0.3px;
 }
@@ -195,7 +161,7 @@
 .st-mp__bar {
     position: relative;
     height: 3px;
-    background: rgba(0, 0, 0, 0.08);
+    background: rgba(0, 0, 0, 0.1);
     border-radius: 2px;
     cursor: pointer;
 }
@@ -205,7 +171,7 @@
     top: 0;
     height: 100%;
     width: 0;
-    background: #BEAEB2;
+    background: #ffffff;
     border-radius: 2px;
 }
 .st-mp__bar-thumb {
@@ -216,62 +182,49 @@
     height: 11px;
     margin-left: -5.5px;
     transform: translateY(-50%);
-    background: #BEAEB2;
+    background: #ffffff;
     border-radius: 50%;
-    border: 2px solid #fff;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
-    opacity: 0;
-    transition: opacity 0.15s;
+    border: 1px solid rgba(0, 0, 0, 0.18);
     pointer-events: none;
 }
-.st-mp__bar:hover .st-mp__bar-thumb { opacity: 1; }
 .st-mp__times {
     display: flex;
     justify-content: space-between;
     font-size: 10.5px;
-    color: #b0a0a5;
+    color: #a3a3a3;
     margin-top: 5px;
     font-variant-numeric: tabular-nums;
 }
 
-/* ========== 控制按钮（SVG） ========== */
+/* ========== 控制按钮（线条 SVG，统一大小） ========== */
 .st-mp__controls {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 20px;
+    gap: 18px;
     margin-top: 12px;
 }
 .st-mp__btn {
-    width: 38px;
-    height: 38px;
+    width: 40px;
+    height: 40px;
     border: none;
     background: transparent;
-    color: #7d6d72;
+    color: #4a4a4a;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    transition: color 0.15s, transform 0.12s;
+    transition: color 0.15s;
 }
-.st-mp__btn svg { width: 21px; height: 21px; }
-.st-mp__btn:hover { color: #3b3235; }
-.st-mp__btn:active { transform: scale(0.9); }
+.st-mp__btn svg { width: 22px; height: 22px; }
+.st-mp__btn:hover { color: #1a1a1a; }
+.st-mp__btn:active { transform: scale(0.92); }
+.st-mp__btn--primary { color: #1a1a1a; }
 
-.st-mp__btn--primary {
-    width: 52px;
-    height: 52px;
-    background: #BEAEB2;
-    color: #fff;
-    box-shadow: 0 8px 20px rgba(190, 174, 178, 0.55);
-}
-.st-mp__btn--primary svg { width: 24px; height: 24px; }
-.st-mp__btn--primary:hover { color: #fff; background: #BE8F98; }
-
-.st-mp__like.is-liked { color: #BE8F98; }
+.st-mp__like.is-liked { color: #1a1a1a; }
 .st-mp__like.is-liked svg path { fill: currentColor; }
-.st-mp__shuffle.is-active, .st-mp__repeat.is-active { color: #BE8F98; }
+.st-mp__shuffle.is-active, .st-mp__repeat.is-active { color: #1a1a1a; }
 .st-mp__repeat.is-one { position: relative; }
 .st-mp__repeat.is-one::after {
     content: '1';
@@ -309,25 +262,24 @@
 .st-mp__add {
     width: 34px;
     height: 34px;
-    border: none;
+    border: 1px solid rgba(0, 0, 0, 0.08);
     border-radius: 50%;
-    background: #BEAEB2;
-    color: #fff;
+    background: #ffffff;
+    color: #4a4a4a;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 12px rgba(190, 174, 178, 0.5);
-    transition: background 0.15s, transform 0.12s;
+    transition: color 0.15s;
 }
-.st-mp__add:hover { background: #BE8F98; }
+.st-mp__add:hover { color: #1a1a1a; }
 .st-mp__add:active { transform: scale(0.92); }
 .st-mp__add svg { width: 17px; height: 17px; }
 
 .st-mp__sheet-title {
     font-size: 14px;
     font-weight: 600;
-    color: #3b3235;
+    color: #3a3a3a;
 }
 .st-mp__sheet-tools { display: flex; align-items: center; gap: 4px; }
 .st-mp__sheet-tools button {
@@ -335,15 +287,15 @@
     height: 28px;
     border: none;
     background: transparent;
-    color: #8a7a7f;
+    color: #8a8a8a;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 6px;
-    transition: background 0.15s, color 0.15s;
+    transition: color 0.15s;
 }
-.st-mp__sheet-tools button:hover { background: rgba(0, 0, 0, 0.05); color: #3b3235; }
+.st-mp__sheet-tools button:hover { color: #1a1a1a; }
 .st-mp__sheet-tools svg { width: 16px; height: 16px; }
 
 /* 添加面板 */
@@ -356,9 +308,9 @@
 .st-mp__add-panel > button {
     flex: 1;
     min-width: 120px;
-    border: 1px dashed rgba(190, 174, 178, 0.7);
-    background: rgba(190, 174, 178, 0.08);
-    color: #7d6d72;
+    border: 1px dashed rgba(0, 0, 0, 0.22);
+    background: rgba(255, 255, 255, 0.5);
+    color: #4a4a4a;
     border-radius: 10px;
     padding: 10px;
     font-size: 12.5px;
@@ -367,9 +319,9 @@
     align-items: center;
     justify-content: center;
     gap: 6px;
-    transition: background 0.15s, color 0.15s;
+    transition: background 0.15s;
 }
-.st-mp__add-panel > button:hover { background: rgba(190, 174, 178, 0.18); color: #3b3235; }
+.st-mp__add-panel > button:hover { background: rgba(0, 0, 0, 0.04); }
 .st-mp__add-panel > button svg { width: 15px; height: 15px; }
 .st-mp__url-row { display: flex; gap: 6px; width: 100%; }
 .st-mp__url-input {
@@ -378,16 +330,16 @@
     background: rgba(0, 0, 0, 0.04);
     border: 1px solid rgba(0, 0, 0, 0.08);
     border-radius: 8px;
-    color: #3b3235;
+    color: #3a3a3a;
     padding: 7px 10px;
     font-size: 12.5px;
     outline: none;
 }
-.st-mp__url-input:focus { border-color: #BEAEB2; }
+.st-mp__url-input:focus { border-color: rgba(0, 0, 0, 0.25); }
 .st-mp__url-add {
-    border: none;
-    background: #BEAEB2;
-    color: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    background: #ffffff;
+    color: #3a3a3a;
     border-radius: 8px;
     padding: 0 14px;
     font-size: 12.5px;
@@ -415,8 +367,8 @@
     transition: background 0.12s;
 }
 .st-mp__item:hover { background: rgba(0, 0, 0, 0.04); }
-.st-mp__item.is-current { background: rgba(190, 174, 178, 0.16); }
-.st-mp__item.is-current .st-mp__item-name { color: #BE8F98; font-weight: 600; }
+.st-mp__item.is-current { background: rgba(0, 0, 0, 0.06); }
+.st-mp__item.is-current .st-mp__item-name { color: #1a1a1a; font-weight: 600; }
 .st-mp__item-name {
     flex: 1;
     min-width: 0;
@@ -425,25 +377,23 @@
     text-overflow: ellipsis;
     font-size: 12.5px;
 }
-.st-mp__item-like { width: 15px; height: 15px; color: #cbb8bd; flex: 0 0 auto; }
+.st-mp__item-like { width: 15px; height: 15px; color: #c2c2c2; flex: 0 0 auto; }
 .st-mp__item-like svg { width: 15px; height: 15px; }
-.st-mp__item-like.is-liked { color: #BE8F98; }
+.st-mp__item-like.is-liked { color: #1a1a1a; }
 .st-mp__item-like.is-liked svg path { fill: currentColor; }
 .st-mp__item-del {
     width: 22px;
     height: 22px;
     border: none;
     background: transparent;
-    color: #c2b2b7;
+    color: #c2c2c2;
     border-radius: 5px;
     cursor: pointer;
-    opacity: 0;
-    transition: opacity 0.12s, background 0.12s, color 0.12s;
+    transition: color 0.12s, background 0.12s;
 }
-.st-mp__item:hover .st-mp__item-del { opacity: 0.8; }
-.st-mp__item-del:hover { opacity: 1; background: rgba(255, 90, 90, 0.15); color: #e06b6b; }
+.st-mp__item-del:hover { background: rgba(0, 0, 0, 0.06); color: #e06b6b; }
 .st-mp__item-del svg { width: 13px; height: 13px; }
-.st-mp__empty { padding: 18px; text-align: center; color: #b3a4a9; font-size: 12px; cursor: default; }
+.st-mp__empty { padding: 18px; text-align: center; color: #b3b3b3; font-size: 12px; cursor: default; }
 
 /* 音量 */
 .st-mp__volume {
@@ -454,7 +404,7 @@
     padding-top: 12px;
     border-top: 1px solid rgba(0, 0, 0, 0.06);
 }
-.st-mp__vol-icon { color: #a4939a; display: flex; }
+.st-mp__vol-icon { color: #9a9a9a; display: flex; }
 .st-mp__vol-icon svg { width: 16px; height: 16px; }
 .st-mp__vol {
     flex: 1;
@@ -471,16 +421,15 @@
     width: 13px;
     height: 13px;
     border-radius: 50%;
-    background: #BEAEB2;
-    border: 2px solid #fff;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.18);
     cursor: pointer;
 }
 .st-mp__vol::-moz-range-thumb {
     width: 13px;
     height: 13px;
-    border: 2px solid #fff;
+    border: 1px solid rgba(0, 0, 0, 0.18);
     border-radius: 50%;
-    background: #BEAEB2;
+    background: #ffffff;
     cursor: pointer;
 }

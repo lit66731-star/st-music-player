@@ -2,7 +2,6 @@ import { extension_settings } from '../../../extensions.js';
 import { saveSettingsDebounced } from '../../../../script.js';
 
 const extensionName = 'music-player';
-const THEME = '#BEAEB2';
 
 const defaultSettings = {
     volume: 0.8,
@@ -115,19 +114,19 @@ function compressImage(file, size = 256) {
 // ---------------- 默认头像（内联 SVG） ----------------
 const DEFAULT_AVATAR = "data:image/svg+xml," + encodeURIComponent(
     `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>` +
-    `<rect width='100' height='100' fill='${THEME}'/>` +
-    `<circle cx='50' cy='40' r='17' fill='#fff' opacity='0.92'/>` +
-    `<path d='M20 82c0-16 13-26 30-26s30 10 30 26' fill='#fff' opacity='0.92'/>` +
+    `<rect width='100' height='100' fill='#efedee'/>` +
+    `<circle cx='50' cy='40' r='17' fill='#bcb5b8'/>` +
+    `<path d='M20 82c0-16 13-26 30-26s30 10 30 26' fill='#bcb5b8'/>` +
     `</svg>`
 );
 
 // ---------------- SVG 图标（线条风格） ----------------
 const ICONS = {
     like: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>`,
-    prev: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6z"/><path d="M20 6l-10 6 10 6z"/></svg>`,
-    play: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.9l13-7.5a1 1 0 0 0 0-1.8l-13-7.5A1 1 0 0 0 7 4.5z"/></svg>`,
-    pause: `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>`,
-    next: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 6l10 6-10 6z"/><path d="M16 6h2v12h-2z"/></svg>`,
+    prev: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 5v14"/><path d="M19 5l-9 7 9 7z"/></svg>`,
+    play: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5v14l11-7z"/></svg>`,
+    pause: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="9" y1="5" x2="9" y2="19"/><line x1="15" y1="5" x2="15" y2="19"/></svg>`,
+    next: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 5v14"/><path d="M5 5l9 7-9 7z"/></svg>`,
     queue: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3.5" cy="6" r="1" fill="currentColor" stroke="none"/><circle cx="3.5" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="3.5" cy="18" r="1" fill="currentColor" stroke="none"/></svg>`,
     add: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
     close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
@@ -178,7 +177,11 @@ function buildPlayerPanel() {
             <img alt="">
             <div class="st-mp__dot"></div>
           </div>
-          <div class="st-mp__link"><i></i><i></i><i></i></div>
+          <div class="st-mp__link">
+            <svg viewBox="0 0 52 26" preserveAspectRatio="none" aria-hidden="true">
+              <path class="st-mp__dash" d="M2 22 Q26 -4 50 22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="3.5 3"/>
+            </svg>
+          </div>
           <div class="st-mp__avatar st-mp__avatar--peer" data-avatar="peer" title="点击换头像">
             <img alt="">
             <div class="st-mp__dot"></div>
@@ -239,32 +242,52 @@ function placePanelDefault() {
     panel.css({ left: left + 'px', top: '64px' });
 }
 
+let suppressClickUntil = 0;
 function initDrag() {
     const panel = $('#st-music-player');
     let dragging = null;
+    // 这些元素内部有自己的点击/拖拽交互，不参与面板拖动（按钮可拖动，见下方阈值判定）
+    const INTERACTIVE = 'input, .st-mp__avatar, .st-mp__bar, .st-mp__list, .st-mp__add-panel';
 
     panel.on('pointerdown', (e) => {
-        if ($(e.target).closest('button, input, .st-mp__avatar, .st-mp__bar, .st-mp__list, .st-mp__add-panel, .st-mp__sheet-tools').length) return;
+        if ($(e.target).closest(INTERACTIVE).length) return;
+        const isButton = $(e.target).closest('button').length;
         dragging = {
             startX: e.clientX, startY: e.clientY,
             left: parseFloat(panel.css('left')) || 0,
             top: parseFloat(panel.css('top')) || 0,
+            active: false,
         };
-        e.preventDefault();
+        if (!isButton) e.preventDefault();
     });
 
     $(document).on('pointermove', (e) => {
         if (!dragging) return;
-        const nx = dragging.left + (e.clientX - dragging.startX);
-        const ny = dragging.top + (e.clientY - dragging.startY);
+        const dx = e.clientX - dragging.startX;
+        const dy = e.clientY - dragging.startY;
+        if (!dragging.active && Math.hypot(dx, dy) < 6) return;
+        dragging.active = true;
+        const nx = dragging.left + dx;
+        const ny = dragging.top + dy;
         panel.css({
             left: Math.max(0, Math.min(window.innerWidth - 60, nx)) + 'px',
             top: Math.max(0, Math.min(window.innerHeight - 60, ny)) + 'px',
         });
     });
 
-    $(document).on('pointerup', () => { dragging = null; });
+    $(document).on('pointerup', () => {
+        if (dragging && dragging.active) suppressClickUntil = Date.now() + 300;
+        dragging = null;
+    });
 }
+
+// 拖动按钮后抑制随之而来的 click，避免误触
+document.addEventListener('click', (e) => {
+    if (Date.now() < suppressClickUntil) {
+        e.stopPropagation();
+        e.preventDefault();
+    }
+}, true);
 
 // ---------------- 事件绑定 ----------------
 function bindEvents() {
