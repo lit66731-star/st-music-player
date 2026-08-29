@@ -166,11 +166,20 @@ function buildTopBarButton() {
     initButtonDrag(btn);
 }
 
-// 顶部按钮可拖动，位置持久化
+// 顶部按钮可拖动，位置持久化（并夹在视口内，避免换设备后跑到屏幕外）
 function initButtonDrag(btn) {
     const settings = extension_settings[extensionName];
+    const clampBtn = (x, y) => {
+        const w = btn[0].offsetWidth || 40;
+        const h = btn[0].offsetHeight || 40;
+        return {
+            left: Math.min(Math.max(0, x), window.innerWidth - w),
+            top: Math.min(Math.max(0, y), window.innerHeight - h),
+        };
+    };
     if (settings.btnLeft != null && settings.btnTop != null) {
-        btn.css({ left: settings.btnLeft + 'px', top: settings.btnTop + 'px', right: 'auto' });
+        const p = clampBtn(settings.btnLeft, settings.btnTop);
+        btn.css({ left: p.left + 'px', top: p.top + 'px', right: 'auto' });
     }
     let drag = null;
     btn.on('pointerdown', (e) => {
@@ -183,7 +192,8 @@ function initButtonDrag(btn) {
         const dy = e.clientY - drag.sy;
         if (!drag.active && Math.hypot(dx, dy) < 6) return;
         drag.active = true;
-        btn.css({ right: 'auto', left: (drag.left + dx) + 'px', top: (drag.top + dy) + 'px' });
+        const p = clampBtn(drag.left + dx, drag.top + dy);
+        btn.css({ right: 'auto', left: p.left + 'px', top: p.top + 'px' });
     });
     $(document).on('pointerup.st-mp-btn', () => {
         if (!drag) return;

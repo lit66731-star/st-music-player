@@ -3,7 +3,7 @@
     position: fixed;
     top: 10px;
     right: 20px;
-    z-index: 30000;
+    z-index: 50000;
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -27,7 +27,7 @@
 /* ========== 播放器面板：F2E0E4 毛玻璃 ========== */
 .st-mp {
     position: fixed;
-    z-index: 25000;
+    z-index: 40000;
     width: 300px;
     max-width: calc(100vw - 16px);
     background: rgba(242, 224, 228, 0.55);
@@ -436,4 +436,16 @@
     border-radius: 50%;
     background: #BEAEB2;
     cursor: pointer;
+}
+
+/* ========== 移动端：按钮默认放右下角，避开顶部栏 ========== */
+@media (max-width: 768px) {
+    #st-music-player-button {
+        top: auto;
+        right: 16px;
+        bottom: 84px;
+    }
+    .st-mp {
+        width: 280px;
+    }
 }
