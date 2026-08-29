@@ -2,29 +2,30 @@ import { extension_settings } from '../../../extensions.js';
 import { saveSettingsDebounced } from '../../../../script.js';
 
 const extensionName = 'music-player';
+const THEME = '#BEAEB2';
 
 const defaultSettings = {
     volume: 0.8,
-    playlist: [],   // { id, name, type: 'local' | 'url', url? }
+    playlist: [],   // { id, name, type: 'local' | 'url', url?, liked }
     currentId: null,
     shuffle: false,
     repeat: 'off',  // 'off' | 'all' | 'one'
 };
 
-// ---------------- IndexedDB：存放本地音频文件，跨刷新保留 ----------------
+// ---------------- IndexedDB：音频文件 + 头像 ----------------
 const DB_NAME = 'st-music-player';
 const DB_STORE = 'tracks';
+const AVATAR_STORE = 'avatars';
 let dbPromise = null;
 
 function openDB() {
     if (dbPromise) return dbPromise;
     dbPromise = new Promise((resolve, reject) => {
-        const req = indexedDB.open(DB_NAME, 1);
+        const req = indexedDB.open(DB_NAME, 2);
         req.onupgradeneeded = () => {
             const db = req.result;
-            if (!db.objectStoreNames.contains(DB_STORE)) {
-                db.createObjectStore(DB_STORE, { keyPath: 'id' });
-            }
+            if (!db.objectStoreNames.contains(DB_STORE)) db.createObjectStore(DB_STORE, { keyPath: 'id' });
+            if (!db.objectStoreNames.contains(AVATAR_STORE)) db.createObjectStore(AVATAR_STORE, { keyPath: 'key' });
         };
         req.onsuccess = () => resolve(req.result);
         req.onerror = () => reject(req.error);
@@ -40,7 +41,6 @@ function idbPut(id, blob) {
         tx.onerror = () => reject(tx.error);
     }));
 }
-
 function idbGet(id) {
     return openDB().then(db => new Promise((resolve, reject) => {
         const tx = db.transaction(DB_STORE, 'readonly');
@@ -49,13 +49,28 @@ function idbGet(id) {
         req.onerror = () => reject(req.error);
     }));
 }
-
 function idbDelete(id) {
     return openDB().then(db => new Promise((resolve, reject) => {
         const tx = db.transaction(DB_STORE, 'readwrite');
         tx.objectStore(DB_STORE).delete(id);
         tx.oncomplete = () => resolve();
         tx.onerror = () => reject(tx.error);
+    }));
+}
+function avatarPut(key, dataUrl) {
+    return openDB().then(db => new Promise((resolve, reject) => {
+        const tx = db.transaction(AVATAR_STORE, 'readwrite');
+        tx.objectStore(AVATAR_STORE).put({ key, dataUrl });
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+    }));
+}
+function avatarGet(key) {
+    return openDB().then(db => new Promise((resolve, reject) => {
+        const tx = db.transaction(AVATAR_STORE, 'readonly');
+        const req = tx.objectStore(AVATAR_STORE).get(key);
+        req.onsuccess = () => resolve(req.result ? req.result.dataUrl : null);
+        req.onerror = () => reject(req.error);
     }));
 }
 
@@ -69,33 +84,66 @@ function loadSettings() {
     if (!Array.isArray(s.playlist)) s.playlist = [];
     return s;
 }
-
-function saveSettings() {
-    saveSettingsDebounced();
-}
-
-function uid() {
-    return 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-}
-
+function saveSettings() { saveSettingsDebounced(); }
+function uid() { return 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
 function fmt(sec) {
     if (!isFinite(sec) || sec < 0) sec = 0;
     sec = Math.floor(sec);
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
-    return m + ':' + String(s).padStart(2, '0');
+    return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
+}
+function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function compressImage(file, size = 256) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+            const c = document.createElement('canvas');
+            const s = Math.min(img.width, img.height);
+            const sx = (img.width - s) / 2, sy = (img.height - s) / 2;
+            c.width = c.height = size;
+            c.getContext('2d').drawImage(img, sx, sy, s, s, 0, 0, size, size);
+            URL.revokeObjectURL(url);
+            resolve(c.toDataURL('image/jpeg', 0.85));
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+        img.src = url;
+    });
 }
 
-function escapeHtml(str) {
-    return String(str).replace(/[&<>"']/g, c => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-    }[c]));
-}
+// ---------------- 默认头像（内联 SVG） ----------------
+const DEFAULT_AVATAR = "data:image/svg+xml," + encodeURIComponent(
+    `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>` +
+    `<rect width='100' height='100' fill='${THEME}'/>` +
+    `<circle cx='50' cy='40' r='17' fill='#fff' opacity='0.92'/>` +
+    `<path d='M20 82c0-16 13-26 30-26s30 10 30 26' fill='#fff' opacity='0.92'/>` +
+    `</svg>`
+);
+
+// ---------------- SVG 图标（线条风格） ----------------
+const ICONS = {
+    like: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>`,
+    prev: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6z"/><path d="M20 6l-10 6 10 6z"/></svg>`,
+    play: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.9l13-7.5a1 1 0 0 0 0-1.8l-13-7.5A1 1 0 0 0 7 4.5z"/></svg>`,
+    pause: `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>`,
+    next: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 6l10 6-10 6z"/><path d="M16 6h2v12h-2z"/></svg>`,
+    queue: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3.5" cy="6" r="1" fill="currentColor" stroke="none"/><circle cx="3.5" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="3.5" cy="18" r="1" fill="currentColor" stroke="none"/></svg>`,
+    add: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+    close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+    shuffle: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg>`,
+    repeat: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>`,
+    music: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`,
+    folder: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`,
+    volume: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" stroke="none"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18 6a8.5 8.5 0 0 1 0 12"/></svg>`,
+    link: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>`,
+};
 
 // ---------------- 播放器状态 ----------------
 const player = {
     audio: null,
-    objectUrls: {},  // id -> objectURL
+    objectUrls: {},   // id -> objectURL
+    avatarTarget: 'mine',
 };
 
 jQuery(async () => {
@@ -104,7 +152,6 @@ jQuery(async () => {
     buildPlayerPanel();
     player.audio = $('<audio></audio>').css('display', 'none').appendTo('body')[0];
     player.audio.volume = settings.volume;
-
     bindEvents();
     await hydrate();
     renderAll();
@@ -113,7 +160,7 @@ jQuery(async () => {
 // ---------------- 顶部栏按钮 ----------------
 function buildTopBarButton() {
     const btn = $(
-        '<div id="st-music-player-button" title="音乐播放器"><i class="fa-solid fa-music"></i></div>'
+        `<div id="st-music-player-button" title="音乐播放器">${ICONS.music}</div>`
     );
     btn.appendTo('body');
     btn.on('click', () => togglePanel());
@@ -124,60 +171,61 @@ function buildPlayerPanel() {
     if ($('#st-music-player').length) return;
     const html = `
     <div id="st-music-player" class="st-mp">
-      <div class="st-mp__header">
-        <span class="st-mp__title"><i class="fa-solid fa-music"></i> 音乐播放器</span>
-        <div class="st-mp__header-actions">
-          <button type="button" class="st-mp__min" title="最小化"><i class="fa-solid fa-minus"></i></button>
-          <button type="button" class="st-mp__close" title="关闭"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-      </div>
+      <div class="st-mp__close" title="关闭">${ICONS.close}</div>
       <div class="st-mp__body">
-        <div class="st-mp__now">
-          <div class="st-mp__cover"><i class="fa-solid fa-compact-disc"></i></div>
-          <div class="st-mp__meta">
-            <div class="st-mp__track">未在播放</div>
-            <div class="st-mp__artist">添加音乐开始播放</div>
+        <div class="st-mp__stage">
+          <div class="st-mp__avatar st-mp__avatar--mine" data-avatar="mine" title="点击换头像">
+            <img alt="">
+            <div class="st-mp__dot"></div>
+          </div>
+          <div class="st-mp__link"><i></i><i></i><i></i></div>
+          <div class="st-mp__avatar st-mp__avatar--peer" data-avatar="peer" title="点击换头像">
+            <img alt="">
+            <div class="st-mp__dot"></div>
           </div>
         </div>
+        <div class="st-mp__track">未在播放</div>
+        <div class="st-mp__status">相距 520km&nbsp;|&nbsp;听了 13140 小时</div>
         <div class="st-mp__progress">
-          <div class="st-mp__bar">
-            <div class="st-mp__bar-fill"></div>
-            <div class="st-mp__bar-thumb"></div>
-          </div>
-          <div class="st-mp__times">
-            <span class="st-mp__cur">0:00</span>
-            <span class="st-mp__dur">0:00</span>
-          </div>
+          <div class="st-mp__bar"><div class="st-mp__bar-fill"></div><div class="st-mp__bar-thumb"></div></div>
+          <div class="st-mp__times"><span class="st-mp__cur">0:00</span><span class="st-mp__dur">0:00</span></div>
         </div>
         <div class="st-mp__controls">
-          <button type="button" class="st-mp__btn st-mp__shuffle" title="随机播放"><i class="fa-solid fa-shuffle"></i></button>
-          <button type="button" class="st-mp__btn st-mp__prev" title="上一首"><i class="fa-solid fa-backward-step"></i></button>
-          <button type="button" class="st-mp__btn st-mp__play st-mp__btn--primary" title="播放/暂停"><i class="fa-solid fa-play"></i></button>
-          <button type="button" class="st-mp__btn st-mp__next" title="下一首"><i class="fa-solid fa-forward-step"></i></button>
-          <button type="button" class="st-mp__btn st-mp__repeat" title="循环模式"><i class="fa-solid fa-repeat"></i><span class="st-mp__repeat-badge">1</span></button>
-        </div>
-        <div class="st-mp__volume">
-          <i class="fa-solid fa-volume-high st-mp__vol-icon"></i>
-          <input type="range" class="st-mp__vol" min="0" max="100" value="80">
-          <span class="st-mp__vol-val">80%</span>
-        </div>
-        <div class="st-mp__add-row" style="display:none">
-          <input type="text" class="st-mp__url-input" placeholder="粘贴音频直链 (mp3/m4a/ogg…)">
-          <button type="button" class="st-mp__url-add">添加</button>
-        </div>
-        <div class="st-mp__playlist">
-          <div class="st-mp__playlist-head">
-            <span>播放列表</span>
-            <div class="st-mp__playlist-actions">
-              <button type="button" class="st-mp__add-local" title="添加本地音乐"><i class="fa-solid fa-folder-open"></i></button>
-              <button type="button" class="st-mp__add-url" title="添加音乐链接"><i class="fa-solid fa-link"></i></button>
-              <button type="button" class="st-mp__clear" title="清空列表"><i class="fa-solid fa-trash"></i></button>
-            </div>
-          </div>
-          <ul class="st-mp__list"></ul>
+          <button type="button" class="st-mp__btn st-mp__like" title="喜欢">${ICONS.like}</button>
+          <button type="button" class="st-mp__btn st-mp__prev" title="上一首">${ICONS.prev}</button>
+          <button type="button" class="st-mp__btn st-mp__play st-mp__btn--primary" title="播放/暂停">${ICONS.play}</button>
+          <button type="button" class="st-mp__btn st-mp__next" title="下一首">${ICONS.next}</button>
+          <button type="button" class="st-mp__btn st-mp__queue" title="歌曲列表">${ICONS.queue}</button>
         </div>
       </div>
-      <input type="file" class="st-mp__file" accept="audio/*" multiple hidden>
+
+      <div class="st-mp__sheet">
+        <div class="st-mp__sheet-head">
+          <button type="button" class="st-mp__add" title="添加音乐">${ICONS.add}</button>
+          <span class="st-mp__sheet-title">播放列表</span>
+          <div class="st-mp__sheet-tools">
+            <button type="button" class="st-mp__shuffle" title="随机">${ICONS.shuffle}</button>
+            <button type="button" class="st-mp__repeat" title="循环">${ICONS.repeat}</button>
+            <button type="button" class="st-mp__sheet-close" title="收起">${ICONS.close}</button>
+          </div>
+        </div>
+        <div class="st-mp__add-panel" style="display:none">
+          <button type="button" class="st-mp__add-local">${ICONS.folder} 本地 MP3</button>
+          <button type="button" class="st-mp__add-url-btn">${ICONS.link} 音乐链接</button>
+          <div class="st-mp__url-row" style="display:none">
+            <input type="text" class="st-mp__url-input" placeholder="粘贴 mp3 直链…">
+            <button type="button" class="st-mp__url-add">添加</button>
+          </div>
+        </div>
+        <ul class="st-mp__list"></ul>
+        <div class="st-mp__volume">
+          <i class="st-mp__vol-icon">${ICONS.volume}</i>
+          <input type="range" class="st-mp__vol" min="0" max="100" value="80">
+        </div>
+      </div>
+
+      <input type="file" class="st-mp__file" accept=".mp3,audio/mpeg,audio/*" multiple hidden>
+      <input type="file" class="st-mp__avatar-file" accept="image/*" hidden>
     </div>`;
     $('body').append(html);
     placePanelDefault();
@@ -186,27 +234,22 @@ function buildPlayerPanel() {
 
 function placePanelDefault() {
     const panel = $('#st-music-player');
-    const w = panel.outerWidth() || 320;
-    const h = panel.outerHeight() || 420;
-    const left = Math.max(8, window.innerWidth - w - 16);
-    const top = Math.max(8, Math.min(window.innerHeight - h - 16, 70));
-    panel.css({ left: left + 'px', top: top + 'px' });
+    const w = panel.outerWidth() || 300;
+    const left = Math.max(8, window.innerWidth - w - 20);
+    panel.css({ left: left + 'px', top: '64px' });
 }
 
 function initDrag() {
     const panel = $('#st-music-player');
-    const header = panel.find('.st-mp__header');
     let dragging = null;
 
-    header.on('pointerdown', (e) => {
-        if ($(e.target).closest('button').length) return; // 点按钮不拖动
+    panel.on('pointerdown', (e) => {
+        if ($(e.target).closest('button, input, .st-mp__avatar, .st-mp__bar, .st-mp__list, .st-mp__add-panel, .st-mp__sheet-tools').length) return;
         dragging = {
-            startX: e.clientX,
-            startY: e.clientY,
+            startX: e.clientX, startY: e.clientY,
             left: parseFloat(panel.css('left')) || 0,
             top: parseFloat(panel.css('top')) || 0,
         };
-        header.addClass('is-dragging');
         e.preventDefault();
     });
 
@@ -214,18 +257,13 @@ function initDrag() {
         if (!dragging) return;
         const nx = dragging.left + (e.clientX - dragging.startX);
         const ny = dragging.top + (e.clientY - dragging.startY);
-        const w = panel.outerWidth();
-        const h = panel.outerHeight();
-        const left = Math.max(0, Math.min(window.innerWidth - 40, nx));
-        const top = Math.max(0, Math.min(window.innerHeight - 40, ny));
-        panel.css({ left: left + 'px', top: top + 'px' });
+        panel.css({
+            left: Math.max(0, Math.min(window.innerWidth - 60, nx)) + 'px',
+            top: Math.max(0, Math.min(window.innerHeight - 60, ny)) + 'px',
+        });
     });
 
-    $(document).on('pointerup', () => {
-        if (!dragging) return;
-        dragging = null;
-        header.removeClass('is-dragging');
-    });
+    $(document).on('pointerup', () => { dragging = null; });
 }
 
 // ---------------- 事件绑定 ----------------
@@ -233,60 +271,47 @@ function bindEvents() {
     const panel = $('#st-music-player');
 
     panel.find('.st-mp__close').on('click', () => togglePanel(false));
-    panel.find('.st-mp__min').on('click', () => panel.toggleClass('is-min'));
-
     panel.find('.st-mp__play').on('click', () => togglePlay());
     panel.find('.st-mp__prev').on('click', () => next(-1));
     panel.find('.st-mp__next').on('click', () => next(1));
+    panel.find('.st-mp__like').on('click', () => toggleLike());
+
+    // 歌曲列表：上滑面板
+    panel.find('.st-mp__queue').on('click', () => toggleSheet(true));
+    panel.find('.st-mp__sheet-close').on('click', () => toggleSheet(false));
 
     panel.find('.st-mp__shuffle').on('click', () => {
         extension_settings[extensionName].shuffle = !extension_settings[extensionName].shuffle;
-        saveSettings();
-        renderAll();
+        saveSettings(); renderAll();
     });
-
     panel.find('.st-mp__repeat').on('click', () => {
         const s = extension_settings[extensionName];
         s.repeat = s.repeat === 'off' ? 'all' : (s.repeat === 'all' ? 'one' : 'off');
-        saveSettings();
-        renderAll();
+        saveSettings(); renderAll();
     });
 
     panel.find('.st-mp__vol').on('input', (e) => {
         const v = Number(e.target.value) / 100;
         player.audio.volume = v;
         extension_settings[extensionName].volume = v;
-        panel.find('.st-mp__vol-val').text(e.target.value + '%');
-        panel.find('.st-mp__vol-icon').attr('class', 'fa-solid ' + volIcon(v) + ' st-mp__vol-icon');
         saveSettings();
     });
 
     // 进度条拖动
-    const bar = panel.find('.st-mp__bar');
-    bar.on('pointerdown', (e) => {
+    panel.find('.st-mp__bar').on('pointerdown', (e) => {
         if (!player.audio.duration) return;
         seekTo(e);
         const move = (ev) => seekTo(ev);
-        const up = () => {
-            $(document).off('pointermove', move);
-            $(document).off('pointerup', up);
-        };
+        const up = () => { $(document).off('pointermove', move); $(document).off('pointerup', up); };
         $(document).on('pointermove', move);
         $(document).on('pointerup', up);
     });
 
-    // 本地文件
-    panel.find('.st-mp__file').on('change', async (e) => {
-        const files = Array.from(e.target.files || []);
-        for (const f of files) await addLocalFile(f);
-        e.target.value = '';
-        renderAll();
-    });
+    // 添加音乐：加号展开面板
+    panel.find('.st-mp__add').on('click', () => panel.find('.st-mp__add-panel').slideToggle(160));
     panel.find('.st-mp__add-local').on('click', () => panel.find('.st-mp__file').trigger('click'));
-
-    // URL 添加
-    panel.find('.st-mp__add-url').on('click', () => {
-        panel.find('.st-mp__add-row').slideToggle(150);
+    panel.find('.st-mp__add-url-btn').on('click', () => {
+        panel.find('.st-mp__url-row').slideToggle(160);
         panel.find('.st-mp__url-input').trigger('focus');
     });
     panel.find('.st-mp__url-add').on('click', () => {
@@ -294,32 +319,38 @@ function bindEvents() {
         const url = input.val().trim();
         if (url) addUrlTrack(url);
         input.val('');
-        panel.find('.st-mp__add-row').slideUp(150);
+        panel.find('.st-mp__url-row').slideUp(160);
         renderAll();
     });
     panel.find('.st-mp__url-input').on('keydown', (e) => {
         if (e.key === 'Enter') panel.find('.st-mp__url-add').trigger('click');
     });
 
-    panel.find('.st-mp__clear').on('click', async () => {
-        const s = extension_settings[extensionName];
-        for (const t of s.playlist) await removeTrackData(t);
-        s.playlist = [];
-        s.currentId = null;
-        stop();
-        saveSettings();
+    panel.find('.st-mp__file').on('change', async (e) => {
+        const files = Array.from(e.target.files || []);
+        for (const f of files) await addLocalFile(f);
+        e.target.value = '';
         renderAll();
     });
 
-    // 播放列表条目点击/删除（事件委托）
+    // 头像换图
+    panel.find('.st-mp__avatar').on('click', (e) => {
+        player.avatarTarget = $(e.currentTarget).data('avatar');
+        panel.find('.st-mp__avatar-file').trigger('click');
+    });
+    panel.find('.st-mp__avatar-file').on('change', async (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (file) await setAvatar(player.avatarTarget, file);
+        e.target.value = '';
+    });
+
+    // 播放列表条目
     panel.find('.st-mp__list').on('click', '.st-mp__item-del', (e) => {
         e.stopPropagation();
-        const id = $(e.currentTarget).closest('.st-mp__item').data('id');
-        removeTrack(id);
+        removeTrack($(e.currentTarget).closest('.st-mp__item').data('id'));
     }).on('click', '.st-mp__item', (e) => {
         if ($(e.target).closest('.st-mp__item-del').length) return;
-        const id = $(e.currentTarget).data('id');
-        const t = getTrack(id);
+        const t = getTrack($(e.currentTarget).data('id'));
         if (t) playTrack(t);
     });
 
@@ -330,71 +361,85 @@ function bindEvents() {
     a.addEventListener('play', renderAll);
     a.addEventListener('pause', renderAll);
     a.addEventListener('ended', () => {
-        const s = extension_settings[extensionName];
-        if (s.repeat === 'one') {
-            a.currentTime = 0;
-            a.play();
-        } else {
-            next(1);
-        }
+        if (extension_settings[extensionName].repeat === 'one') { a.currentTime = 0; a.play(); }
+        else next(1);
     });
     let errorGuard = 0;
     a.addEventListener('playing', () => { errorGuard = 0; });
     a.addEventListener('error', () => {
-        // 播放失败时跳到下一首；连续失败则停止，避免死循环
         errorGuard++;
         if (errorGuard > 3) { errorGuard = 0; stop(); return; }
         next(1);
     });
 }
 
+// ---------------- 头像 ----------------
+async function setAvatar(key, file) {
+    const dataUrl = await compressImage(file, 256);
+    if (!dataUrl) return;
+    await avatarPut(key, dataUrl);
+    $(`.st-mp__avatar--${key} img`).attr('src', dataUrl);
+}
+
+async function loadAvatars() {
+    for (const key of ['mine', 'peer']) {
+        const dataUrl = await avatarGet(key);
+        $(`.st-mp__avatar--${key} img`).attr('src', dataUrl || DEFAULT_AVATAR);
+    }
+}
+
+// ---------------- 连接动效 ----------------
+function updateConnectionState() {
+    const panel = $('#st-music-player');
+    const track = currentTrack();
+    const playing = !!track && !player.audio.paused && !player.audio.ended;
+    if (playing && !panel.hasClass('is-connected') && !panel.hasClass('is-connecting')) {
+        panel.addClass('is-connecting');
+        setTimeout(() => {
+            panel.removeClass('is-connecting').addClass('is-connected');
+        }, 2400);
+    }
+    if (!track) {
+        panel.removeClass('is-connected is-connecting');
+    }
+}
+
 // ---------------- 播放列表操作 ----------------
 function getTrack(id) {
     return extension_settings[extensionName].playlist.find(t => t.id === id) || null;
 }
-
 async function addLocalFile(file) {
     const s = extension_settings[extensionName];
     const id = uid();
-    const track = { id, name: file.name.replace(/\.[^.]+$/, ''), type: 'local' };
+    const track = { id, name: file.name.replace(/\.[^.]+$/, ''), type: 'local', liked: false };
     await idbPut(id, file);
     s.playlist.push(track);
     saveSettings();
 }
-
 function addUrlTrack(url) {
     const s = extension_settings[extensionName];
     let name = url.split('/').pop().split('?')[0];
     try { name = decodeURIComponent(name); } catch (e) { /* ignore */ }
     if (!name) name = url;
-    s.playlist.push({ id: uid(), name, type: 'url', url });
+    s.playlist.push({ id: uid(), name, type: 'url', url, liked: false });
     saveSettings();
 }
-
 async function removeTrack(id) {
     const s = extension_settings[extensionName];
     const track = getTrack(id);
     if (!track) return;
     await removeTrackData(track);
     s.playlist = s.playlist.filter(t => t.id !== id);
-    if (s.currentId === id) {
-        s.currentId = null;
-        stop();
-    }
+    if (s.currentId === id) { s.currentId = null; stop(); }
     saveSettings();
     renderAll();
 }
-
 async function removeTrackData(track) {
     if (track.type === 'local') {
         await idbDelete(track.id);
-        if (player.objectUrls[track.id]) {
-            URL.revokeObjectURL(player.objectUrls[track.id]);
-            delete player.objectUrls[track.id];
-        }
+        if (player.objectUrls[track.id]) { URL.revokeObjectURL(player.objectUrls[track.id]); delete player.objectUrls[track.id]; }
     }
 }
-
 async function resolveUrl(track) {
     if (track.type === 'url') return track.url;
     if (player.objectUrls[track.id]) return player.objectUrls[track.id];
@@ -408,30 +453,19 @@ async function resolveUrl(track) {
 // ---------------- 播放控制 ----------------
 async function playTrack(track) {
     const url = await resolveUrl(track);
-    if (!url) {
-        toastr && toastr.warning('无法加载音频文件');
-        return;
-    }
+    if (!url) { console.warn('[music-player] 无法加载音频'); return; }
     extension_settings[extensionName].currentId = track.id;
     saveSettings();
     player.audio.src = url;
-    try {
-        await player.audio.play();
-    } catch (e) { /* autoplay 限制，等待用户交互 */ }
+    try { await player.audio.play(); } catch (e) { /* autoplay 限制 */ }
     renderAll();
 }
-
 function togglePlay() {
     const a = player.audio;
-    if (!a.src && extension_settings[extensionName].playlist.length) {
-        const first = extension_settings[extensionName].playlist[0];
-        playTrack(first);
-        return;
-    }
+    if (!a.src && extension_settings[extensionName].playlist.length) { playTrack(extension_settings[extensionName].playlist[0]); return; }
     if (!a.src) return;
     if (a.paused) a.play(); else a.pause();
 }
-
 function stop() {
     player.audio.pause();
     player.audio.currentTime = 0;
@@ -439,19 +473,12 @@ function stop() {
     player.audio.load();
     renderAll();
 }
-
 function next(direction = 1) {
     const s = extension_settings[extensionName];
     const list = s.playlist;
     if (!list.length) return;
     const idx = list.findIndex(t => t.id === s.currentId);
-
-    if (idx === -1) {
-        const ni = s.shuffle ? Math.floor(Math.random() * list.length) : 0;
-        playTrack(list[ni]);
-        return;
-    }
-
+    if (idx === -1) { playTrack(list[s.shuffle ? Math.floor(Math.random() * list.length) : 0]); return; }
     let ni;
     if (s.shuffle) {
         if (list.length === 1) ni = 0;
@@ -468,11 +495,17 @@ function next(direction = 1) {
     }
     playTrack(list[ni]);
 }
+function toggleLike() {
+    const track = currentTrack();
+    if (!track) return;
+    track.liked = !track.liked;
+    saveSettings();
+    renderAll();
+}
 
 // ---------------- 渲染 ----------------
 function currentTrack() {
-    const s = extension_settings[extensionName];
-    return getTrack(s.currentId);
+    return getTrack(extension_settings[extensionName].currentId);
 }
 
 function renderAll() {
@@ -483,33 +516,18 @@ function renderAll() {
     const track = currentTrack();
     const playing = !!track && !a.paused && !a.ended;
 
-    // 顶部按钮状态
     $('#st-music-player-button').toggleClass('is-playing', playing);
 
-    // 封面与标题
-    panel.find('.st-mp__cover').toggleClass('is-spinning', playing);
     panel.find('.st-mp__track').text(track ? track.name : '未在播放');
-    panel.find('.st-mp__artist').text(track ? (track.type === 'url' ? '网络音乐' : '本地音乐') : '添加音乐开始播放');
-
-    // 播放按钮图标
-    panel.find('.st-mp__play i').attr('class', 'fa-solid ' + (playing ? 'fa-pause' : 'fa-play'));
-
-    // 随机 / 循环状态
+    panel.find('.st-mp__play').html(playing ? ICONS.pause : ICONS.play);
+    panel.find('.st-mp__like').toggleClass('is-liked', !!(track && track.liked));
     panel.find('.st-mp__shuffle').toggleClass('is-active', s.shuffle);
-    const repBtn = panel.find('.st-mp__repeat');
-    repBtn.toggleClass('is-active', s.repeat !== 'off');
-    repBtn.toggleClass('is-one', s.repeat === 'one');
-    repBtn.attr('title', { off: '循环：关', all: '循环：列表', one: '循环：单曲' }[s.repeat]);
-    repBtn.find('i').attr('class', 'fa-solid fa-repeat');
-    repBtn.find('.st-mp__repeat-badge').toggle(s.repeat === 'one');
+    panel.find('.st-mp__repeat').toggleClass('is-active', s.repeat !== 'off').toggleClass('is-one', s.repeat === 'one');
 
-    // 音量
     const vol = Math.round(a.volume * 100);
     panel.find('.st-mp__vol').val(vol);
-    panel.find('.st-mp__vol-val').text(vol + '%');
-    panel.find('.st-mp__vol-icon').attr('class', 'fa-solid ' + volIcon(a.volume) + ' st-mp__vol-icon');
 
-    // 播放列表
+    updateConnectionState();
     renderPlaylist();
     updateProgress();
 }
@@ -519,14 +537,13 @@ function renderPlaylist() {
     const list = $('#st-music-player .st-mp__list');
     const items = s.playlist.map(t => {
         const isCur = t.id === s.currentId;
-        const icon = t.type === 'url' ? 'fa-link' : 'fa-file-audio';
-        return `<li class="st-mp__item ${isCur ? 'is-current' : ''}" data-id="${t.id}" title="${escapeHtml(t.name)}">
-            <i class="fa-solid ${icon} st-mp__item-icon"></i>
+        return `<li class="st-mp__item ${isCur ? 'is-current' : ''}" data-id="${t.id}">
             <span class="st-mp__item-name">${escapeHtml(t.name)}</span>
-            <button type="button" class="st-mp__item-del" title="移除"><i class="fa-solid fa-xmark"></i></button>
+            <span class="st-mp__item-like ${t.liked ? 'is-liked' : ''}">${ICONS.like}</span>
+            <button type="button" class="st-mp__item-del" title="移除">${ICONS.close}</button>
         </li>`;
     }).join('');
-    list.html(items || '<li class="st-mp__empty">列表为空，添加音乐吧</li>');
+    list.html(items || '<li class="st-mp__empty">列表为空，点左上角 + 添加音乐</li>');
 }
 
 function updateProgress() {
@@ -552,37 +569,26 @@ function seekTo(e) {
     updateProgress();
 }
 
-function volIcon(v) {
-    if (v <= 0) return 'fa-volume-xmark';
-    if (v < 0.5) return 'fa-volume-low';
-    return 'fa-volume-high';
-}
-
-// ---------------- 面板显隐 ----------------
+// ---------------- 面板 / 列表显隐 ----------------
 function togglePanel(force) {
     const panel = $('#st-music-player');
     const show = force === undefined ? panel.is(':hidden') : force;
-    if (show) {
-        panel.removeClass('is-min').show();
-    } else {
-        panel.hide();
-    }
+    if (show) panel.removeClass('open-sheet').show();
+    else panel.hide();
+}
+function toggleSheet(force) {
+    const panel = $('#st-music-player');
+    const open = force === undefined ? !panel.hasClass('open-sheet') : force;
+    panel.toggleClass('open-sheet', open);
 }
 
-// ---------------- 启动时恢复本地音频 URL ----------------
+// ---------------- 启动恢复 ----------------
 async function hydrate() {
     const s = extension_settings[extensionName];
-    await Promise.all(s.playlist.map(async (t) => {
-        if (t.type === 'local') await resolveUrl(t);
-    }));
-    // 恢复当前曲目（不自动播放，等待用户点击）
+    await Promise.all(s.playlist.map(async (t) => { if (t.type === 'local') await resolveUrl(t); }));
     if (s.currentId) {
         const track = getTrack(s.currentId);
-        if (track) {
-            const url = await resolveUrl(track);
-            if (url) {
-                player.audio.src = url;
-            }
-        }
+        if (track) { const url = await resolveUrl(track); if (url) player.audio.src = url; }
     }
+    await loadAvatars();
 }
