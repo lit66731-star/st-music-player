@@ -159,10 +159,42 @@ jQuery(async () => {
 // ---------------- 顶部栏按钮 ----------------
 function buildTopBarButton() {
     const btn = $(
-        `<div id="st-music-player-button" title="音乐播放器">${ICONS.music}</div>`
+        `<div id="st-music-player-button" title="音乐播放器（可拖动）">${ICONS.music}</div>`
     );
     btn.appendTo('body');
     btn.on('click', () => togglePanel());
+    initButtonDrag(btn);
+}
+
+// 顶部按钮可拖动，位置持久化
+function initButtonDrag(btn) {
+    const settings = extension_settings[extensionName];
+    if (settings.btnLeft != null && settings.btnTop != null) {
+        btn.css({ left: settings.btnLeft + 'px', top: settings.btnTop + 'px', right: 'auto' });
+    }
+    let drag = null;
+    btn.on('pointerdown', (e) => {
+        const r = btn[0].getBoundingClientRect();
+        drag = { sx: e.clientX, sy: e.clientY, left: r.left, top: r.top, active: false };
+    });
+    $(document).on('pointermove.st-mp-btn', (e) => {
+        if (!drag) return;
+        const dx = e.clientX - drag.sx;
+        const dy = e.clientY - drag.sy;
+        if (!drag.active && Math.hypot(dx, dy) < 6) return;
+        drag.active = true;
+        btn.css({ right: 'auto', left: (drag.left + dx) + 'px', top: (drag.top + dy) + 'px' });
+    });
+    $(document).on('pointerup.st-mp-btn', () => {
+        if (!drag) return;
+        if (drag.active) {
+            suppressClickUntil = Date.now() + 300;
+            settings.btnLeft = parseFloat(btn.css('left'));
+            settings.btnTop = parseFloat(btn.css('top'));
+            saveSettings();
+        }
+        drag = null;
+    });
 }
 
 // ---------------- 播放器面板 ----------------
