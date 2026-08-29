@@ -1,0 +1,13 @@
+{
+    "name": "music-player",
+    "display_name": "Music Player",
+    "description": "A compact floating music player with top-bar button, local & URL playlist.",
+    "author": "cc_test",
+    "version": "1.0.0",
+    "loading_order": 100,
+    "requires": [],
+    "optional": [],
+    "js": "index.js",
+    "css": "style.css",
+    "auto_update": false
+}
