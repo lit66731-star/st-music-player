@@ -112,17 +112,9 @@ jQuery(async () => {
 // ---------------- 顶部栏按钮 ----------------
 function buildTopBarButton() {
     const btn = $(
-        '<div id="st-music-player-button" class="menu_button fa-solid fa-music" title="音乐播放器"></div>'
+        '<div id="st-music-player-button" title="音乐播放器"><i class="fa-solid fa-music"></i></div>'
     );
-    if ($('#extensionsMenuButton').length) {
-        btn.insertBefore('#extensionsMenuButton');
-    } else if ($('#top-bar').length) {
-        $('#top-bar').append(btn);
-    } else {
-        btn.css({
-            position: 'fixed', top: '8px', right: '100px', zIndex: '25000',
-        }).appendTo('body');
-    }
+    btn.appendTo('body');
     btn.on('click', () => togglePanel());
 }
 
