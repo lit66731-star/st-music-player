@@ -1,4 +1,4 @@
-import { extension_settings, saveSettingsDebounced } from '../../../../extensions.js';
+import { extension_settings, saveSettingsDebounced } from '../../../extensions.js';
 
 const extensionName = 'music-player';
 
