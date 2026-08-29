@@ -207,16 +207,15 @@ function buildPlayerPanel() {
         <div class="st-mp__stage">
           <div class="st-mp__avatar st-mp__avatar--mine" data-avatar="mine" title="点击换头像">
             <img alt="">
-            <div class="st-mp__dot"></div>
           </div>
           <div class="st-mp__link">
             <svg viewBox="0 0 52 26" preserveAspectRatio="none" aria-hidden="true">
-              <path class="st-mp__dash" d="M2 22 Q26 -4 50 22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="3.5 3"/>
+              <path class="st-mp__ecg-base" d="M0 13 H7 L10 13 L12 8 L14 18 L16 5 L18 13 L21 13 L24 9 L26 13 H52" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <path class="st-mp__ecg" d="M0 13 H7 L10 13 L12 8 L14 18 L16 5 L18 13 L21 13 L24 9 L26 13 H52" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>
           <div class="st-mp__avatar st-mp__avatar--peer" data-avatar="peer" title="点击换头像">
             <img alt="">
-            <div class="st-mp__dot"></div>
           </div>
         </div>
         <div class="st-mp__track">未在播放</div>
